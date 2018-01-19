@@ -18,11 +18,11 @@ namespace Hue
         public static HueBridge Locate()
         {
             //https://www.meethue.com/api/nupnp
-            //return LocateAsync().Result;
-            return new HueBridge("192.168.0.102");
+            //return LocateAsync();
+            return new HueBridge("192.168.2.117:80");
         }
 
-        public static async Task<HueBridge> LocateAsync()
+        public static HueBridge LocateAsync()
         {
             if (UPnP.NAT.Discover())
             {
@@ -30,7 +30,7 @@ namespace Hue
                     .Where(s => s.EndsWith("/description.xml")).ToList();
                 foreach (var endpoint in endpoints)
                 {
-                    if (await IsHue(endpoint))
+                    if (IsHue(endpoint))
                     {
                         var ip = endpoint.Replace("http://", "").Replace("/description.xml", "");
                         return new HueBridge(ip);
@@ -42,14 +42,16 @@ namespace Hue
         }
 
         // http://www.nerdblog.com/2012/10/a-day-with-philips-hue.html - description.xml retrieval
-        private static async Task<bool> IsHue(string discoveryUrl)
+        private static bool IsHue(string discoveryUrl)
         {
             var http = new HttpClient {Timeout = TimeSpan.FromMilliseconds(2000)};
             try {
-                var res = await http.GetStringAsync(discoveryUrl);
-                if (!string.IsNullOrWhiteSpace(res))
+                var res = http.GetStringAsync(discoveryUrl);
+                res.Wait();
+                var str = res.Result;
+                if (!string.IsNullOrWhiteSpace(str))
                 {
-                    if (res.Contains("Philips hue bridge"))
+                    if (str.Contains("Philips hue bridge"))
                         return true;
                 }
             } catch

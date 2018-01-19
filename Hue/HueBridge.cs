@@ -20,19 +20,15 @@ namespace Hue
         public readonly string IP; 
 
         private readonly string appname = "winhueapp";
-        private Timer timer;
         private bool IsAuthenticated = false;
         
         public HueBridge(string ip)
         {
             Urls = new UrlProvider(ip);
             IP = ip;
-            // not needed - clock for every 1 sec update status. 
-            //timer = new Timer(StatusCheckEvent, null, 0, 1000);
-            InitializeRouter();
         }
 
-        public async Task<bool> InitializeRouter()
+        public bool InitializeRouter()
         {
             if (!string.IsNullOrEmpty(Settings.Default.BridgeApiKey))
             {
@@ -40,7 +36,7 @@ namespace Hue
                 if (IsAuthenticated) return true;
             }
 
-            return await Register();
+            return Register();
         }
 
         private void StatusCheckEvent(object state)
@@ -81,7 +77,7 @@ namespace Hue
             }
         }
 
-        private async Task<bool> Register()
+        private bool Register()
         {
             var retryCount = 0;
             const int retryMax = 60;
@@ -90,7 +86,7 @@ namespace Hue
             while (retryCount < retryMax) // wait a minute, check each second
             {
                 var body = "{\"devicetype\":\"" + appname + "\"}";
-                var responseFromServer = await HttpRestHelper.Post(Urls.GetRegisterUrl(), body);
+                var responseFromServer = HttpRestHelper.Post(Urls.GetRegisterUrl(), body);
 
                 if (responseFromServer.Contains("link button not pressed"))
                 {
@@ -124,9 +120,9 @@ namespace Hue
             return false;
         }
 
-        private async void SetLightStatus(string lightKey, string json)
+        private void SetLightStatus(string lightKey, string json)
         {
-            await HttpRestHelper.Put(Urls.GetLampUrl(lightKey), json);
+            HttpRestHelper.Put(Urls.GetLampUrl(lightKey), json);
         }
 
         public void AlertAllLights()
